@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  labels:
+    app: outage-sense
+    component: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: mongodb
+  template:
+    metadata:
+      labels:
+        app: outage-sense
+        component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: mongo-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+spec:
+  type: ClusterIP
+  selector:
+    component: mongodb
+  ports:
+    - port: 27017
+      targetPort: 27017

@@ -1,0 +1,83 @@
+version: "3.8"
+
+services:
+  # ── Frontend ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - outage-net
+
+  # ── Backend ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/outage-sense
+      - ML_SERVICE_URL=http://ml-service:5001
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - mongodb
+      - ml-service
+    networks:
+      - outage-net
+
+  # ── ML Service ───────────────────────────────────────
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: ../docker/Dockerfile.ml
+    ports:
+      - "5001:5001"
+    environment:
+      - ML_SERVICE_PORT=5001
+      - FLASK_DEBUG=false
+    networks:
+      - outage-net
+
+  # ── MongoDB ──────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - outage-net
+
+  # ── Prometheus ───────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - outage-net
+
+  # ── Node Exporter ────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    networks:
+      - outage-net
+
+volumes:
+  mongo-data:
+
+networks:
+  outage-net:
+    driver: bridge

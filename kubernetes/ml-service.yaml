@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  labels:
+    app: outage-sense
+    component: ml-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: ml-service
+  template:
+    metadata:
+      labels:
+        app: outage-sense
+        component: ml-service
+    spec:
+      containers:
+        - name: ml-service
+          image: outage-sense-ml:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          env:
+            - name: ML_SERVICE_PORT
+              value: "5001"
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-service
+spec:
+  type: ClusterIP
+  selector:
+    component: ml-service
+  ports:
+    - port: 5001
+      targetPort: 5001

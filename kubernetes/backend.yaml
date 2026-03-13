@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: outage-sense
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: outage-sense
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: outage-sense-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: MONGO_URI
+              value: "mongodb://mongodb:27017/outage-sense"
+            - name: ML_SERVICE_URL
+              value: "http://ml-service:5001"
+            - name: PROMETHEUS_URL
+              value: "http://prometheus:9090"
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  type: ClusterIP
+  selector:
+    component: backend
+  ports:
+    - port: 5000
+      targetPort: 5000
