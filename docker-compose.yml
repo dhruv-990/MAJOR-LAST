@@ -38,7 +38,7 @@ services:
       context: ./ml-service
       dockerfile: ../docker/Dockerfile.ml
     ports:
-      - "5001:5001"
+      - "5002:5001"
     environment:
       - ML_SERVICE_PORT=5001
       - FLASK_DEBUG=false
